@@ -72,7 +72,7 @@ rank_choice_results <- function(data) {
   }
 }
 
-plot_rounds <- function(data) {
+plot_rounds <- function(data, output = 'gif') {
   highest_vote_percent <- max(table(data[,1])) /nrow(data)
   
   i <- 1
@@ -89,7 +89,7 @@ plot_rounds <- function(data) {
     rounds$Round <- i
     
     rounds <- rounds[order(rounds$Freq, decreasing = TRUE),]
-
+    
     rounds$Rank <- seq(from = nrow(rounds),
                        to = 1,
                        by = -1)
@@ -130,43 +130,79 @@ plot_rounds <- function(data) {
   
   complete$Option <- paste0(str_wrap(gsub('\\.', ' ', complete$Option), 15), '\n')
   
-  g <- ggplot(data = complete) +
-    geom_vline(xintercept = nrow(complete) / 2,
-               color = 'grey70',
-               linetype = 'dashed') +
-    geom_rect(aes(xmin = 0, xmax = Votes,
-                  ymin = Rank - 0.45, ymax = Rank + 0.45,
-                  group = Option, fill = Option,
-                  color = after_scale(clr_darken(fill, 0.3)))) +
-    geom_text(aes(x = 0, y = Rank,
-                  label = Option),
-              hjust = 0,
-              family = 'serif') +
-    scale_x_continuous(expand = c(0,0),
-                       limits = c(0, nrow(complete)),
-                       breaks = seq(from = 0,
-                                    to = nrow(complete),
-                                    length.out = 5),
-                       labels = percent(seq(from = 0,
-                                            to = 1,
-                                            by = 0.25))) +
-    labs(title = 'Round {as.integer(frame_time)}',
-         x = 'Votes',
-         y = 'Rank') +
-    transition_time(Round) +
-    theme(legend.position = 'top',
-          legend.title = element_blank(),
-          plot.title = element_text(hjust = 0.5,
-                                    family = 'serif'),
-          axis.line.y = element_line(color = 'black'),
-          axis.ticks = element_blank(),
-          axis.text.y = element_blank(),
-          panel.background = element_rect(fill = NA),
-          panel.grid = element_blank())
-  
-  return(animate(g, renderer = gifski_renderer(), rewind = FALSE,
-                 nframes = max(complete$Round)*30 + 45, fps = 60,
-                 end_pause = 45, start_pause = 15))
+  if(output == 'gif') {
+    g <- ggplot(data = complete) +
+      geom_vline(xintercept = nrow(complete) / 2,
+                 color = 'grey70') +
+      geom_rect(aes(xmin = 0, xmax = Votes,
+                    ymin = Rank - 0.45, ymax = Rank + 0.45,
+                    group = Option, fill = Option,
+                    color = after_scale(clr_darken(fill, 0.3)))) +
+      geom_text(aes(x = 0, y = Rank,
+                    label = Option),
+                hjust = 0,
+                family = 'serif') +
+      scale_x_continuous(expand = c(0,0),
+                         limits = c(0, nrow(complete)),
+                         breaks = seq(from = 0,
+                                      to = nrow(complete),
+                                      length.out = 5),
+                         labels = percent(seq(from = 0,
+                                              to = 1,
+                                              by = 0.25))) +
+      labs(title = 'Round {as.integer(frame_time)}',
+           x = 'Votes',
+           y = 'Rank') +
+      transition_time(Round) +
+      theme(legend.position = 'top',
+            legend.title = element_blank(),
+            plot.title = element_text(hjust = 0.5,
+                                      family = 'serif'),
+            axis.line.y = element_line(color = 'black'),
+            axis.ticks = element_blank(),
+            axis.text.y = element_blank(),
+            panel.background = element_rect(fill = NA),
+            panel.grid = element_blank())
+    
+    return(animate(g, renderer = gifski_renderer(), rewind = FALSE,
+                   nframes = max(complete$Round)*30 + 45, fps = 60,
+                   end_pause = 45, start_pause = 15))
+  }  else {
+    g <- ggplot(data = complete) +
+      geom_vline(xintercept = nrow(complete) / 2,
+                 color = 'grey70') +
+      geom_rect(aes(xmin = 0, xmax = Votes,
+                    ymin = Rank - 0.45, ymax = Rank + 0.45,
+                    group = Option, fill = Option,
+                    color = after_scale(clr_darken(fill, 0.3)))) +
+      geom_text(aes(x = 0, y = Rank,
+                    label = Option),
+                hjust = 0,
+                family = 'serif') +
+      scale_x_continuous(expand = c(0,0),
+                         limits = c(0, nrow(complete)),
+                         breaks = seq(from = 0,
+                                      to = nrow(complete),
+                                      length.out = 5),
+                         labels = percent(seq(from = 0,
+                                              to = 1,
+                                              by = 0.25))) +
+      labs(title = 'Book Club Voting by Round',
+           x = 'Votes',
+           y = 'Rank') +
+      facet_wrap(facets = 'Round') +
+      theme(legend.position = 'top',
+            legend.title = element_blank(),
+            plot.title = element_text(hjust = 0.5,
+                                      family = 'serif'),
+            axis.line.y = element_line(color = 'black'),
+            axis.ticks = element_blank(),
+            axis.text.y = element_blank(),
+            panel.background = element_rect(fill = NA),
+            panel.grid = element_blank())
+    
+    return(g)
+  }
 }
 
 # Applying the functions --------------------------------------------------
@@ -178,7 +214,9 @@ data <- rank_choice_data(data)
 rank_choice_results(data)
 
 #test the plotting function
-plot_rounds(data)
+plot_rounds(data, output = 'static')
+
+#anim_save('voting gif.gif', animation = last_animation())
 
 # Test Case ---------------------------------------------------------------
 
